@@ -3,15 +3,13 @@ package com.tarek360.instacapture
 import android.app.Activity
 import android.graphics.Bitmap
 import android.view.View
-
 import com.tarek360.instacapture.exception.ActivityNotRunningException
 import com.tarek360.instacapture.listener.ScreenCaptureListener
 import com.tarek360.instacapture.screenshot.ScreenshotProvider
 import com.tarek360.instacapture.utility.Logger
+import io.reactivex.Observable
+import io.reactivex.android.schedulers.AndroidSchedulers
 
-import rx.Observable
-import rx.Subscriber
-import rx.android.schedulers.AndroidSchedulers
 
 /**
  * Created by tarek on 5/20/17.
@@ -28,20 +26,15 @@ object Instacapture {
 
         screenCaptureListener.onCaptureStarted()
 
-        captureRx(activity, *ignoredViews).subscribe(object : Subscriber<Bitmap>() {
-            override fun onCompleted() {}
-
-            override fun onError(e: Throwable) {
-                Logger.e(ERROR_SCREENSHOT_CAPTURE_FAILED)
-                Logger.printStackTrace(e)
-                screenCaptureListener.onCaptureFailed(e)
-            }
-
-            override fun onNext(bitmap: Bitmap) {
-                screenCaptureListener.onCaptureComplete(bitmap)
-            }
-        })
-
+        captureRx(activity, *ignoredViews).subscribe(
+                {
+                    screenCaptureListener.onCaptureComplete(it)
+                },
+                {
+                    Logger.e(ERROR_SCREENSHOT_CAPTURE_FAILED)
+                    Logger.printStackTrace(it)
+                    screenCaptureListener.onCaptureFailed(it)
+                })
     }
 
     fun captureRx(activity: Activity,
@@ -50,8 +43,8 @@ object Instacapture {
         val activityReferenceManager = ActivityReferenceManager()
         activityReferenceManager.setActivity(activity)
 
-        val validatedActivity = activityReferenceManager.validatedActivity ?:
-                return Observable.error<Bitmap>(ActivityNotRunningException(MESSAGE_IS_ACTIVITY_RUNNING))
+        val validatedActivity = activityReferenceManager.validatedActivity
+                ?: return Observable.error<Bitmap>(ActivityNotRunningException(MESSAGE_IS_ACTIVITY_RUNNING))
 
         val screenshotProvider = ScreenshotProvider()
 
@@ -79,5 +72,4 @@ object Instacapture {
             Logger.disable()
         }
     }
-
 }

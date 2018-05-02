@@ -14,8 +14,8 @@ import com.tarek360.sample.utility.Utility;
 import java.io.File;
 
 import butterknife.ButterKnife;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Action1;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Consumer;
 
 public abstract class BaseSampleActivity extends AppCompatActivity
         implements AlertDialogFragment.OnAlertDialogListener {
@@ -39,14 +39,14 @@ public abstract class BaseSampleActivity extends AppCompatActivity
 
     protected void captureScreenshot(@Nullable View... ignoredViews) {
 
-        Instacapture.INSTANCE.captureRx(this, ignoredViews).subscribe(new Action1<Bitmap>() {
+        Instacapture.INSTANCE.captureRx(this, ignoredViews).subscribe(new Consumer<Bitmap>() {
             @Override
-            public void call(Bitmap bitmap) {
+            public void accept(Bitmap bitmap) {
                 Utility.getScreenshotFileObservable(BaseSampleActivity.this, bitmap)
                         .observeOn(AndroidSchedulers.mainThread())
-                        .subscribe(new Action1<File>() {
+                        .subscribe(new Consumer<File>() {
                             @Override
-                            public void call(File file) {
+                            public void accept(File file) {
 
                                 startActivity(ShowScreenShotActivity.buildIntent(BaseSampleActivity.this,
                                         file.getAbsolutePath()));
